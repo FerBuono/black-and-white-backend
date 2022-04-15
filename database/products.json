@@ -1,0 +1,22 @@
+[
+    {
+        "name": "name2",
+        "desc": "desc2",
+        "code": "code2",
+        "url": "url2",
+        "price": 200,
+        "stock": 200,
+        "id": "7aee5f47-31a4-4cd7-b7de-515db28b19f2",
+        "timestamp": 1650057641622
+    },
+    {
+        "name": "name cambiado",
+        "desc": "desc",
+        "code": "code",
+        "url": "url",
+        "price": 100,
+        "stock": 100,
+        "id": "2e9a8deb-3249-403b-8d14-e654c7dfe028",
+        "timestamp": 1650053429935
+    }
+]
