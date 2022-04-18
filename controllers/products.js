@@ -79,7 +79,7 @@ const updateById = async(req, res = reponse) => {
 
         await fs.promises.writeFile('database/products.json', JSON.stringify(newProductsList));
 
-        res.status(200).json({productsList});
+        res.status(200).json({newProductsList});
     
     } catch (error) {
         console.log(error);
