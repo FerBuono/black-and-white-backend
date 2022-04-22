@@ -83,13 +83,24 @@ const addProductToCartById = async(req, res = response) => {
         const productsList = JSON.parse(productsContent);
         
         const productToAdd = productsList.find(product => product.id === newProductId);
+        productToAdd.amount = 1;
         
         const cartToUpdate = cartsList.find(cart => cart.id === cartId);
-        cartToUpdate.products.push(productToAdd);
+
+        if(cartToUpdate.products.find(product => product.id === newProductId) === undefined) {
+            cartToUpdate.products.push(productToAdd);
+        } else {
+            cartToUpdate.products.forEach(product => {
+                if(product.id === newProductId) {
+                    console.log('aca')
+                    product.amount += 1
+                };
+            });
+        };
 
         await fs.promises.writeFile('database/carts.json', JSON.stringify(cartsList));
 
-        res.status(200).json({newProductId});
+        res.status(200).json({cart: cartToUpdate.products});
 
     } catch (error) {
         console.log(error);
