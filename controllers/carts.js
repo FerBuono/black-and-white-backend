@@ -39,11 +39,9 @@ const deleteCartById = async(req, res = response) => {
         const cartToClear = cartsList.find(cart => cart.id === cartId);
         cartToClear.products = [];
 
-        const newCartsList = cartsList.filter(cart => cart.id !== cartId);
+        await fs.promises.writeFile('database/carts.json', JSON.stringify(cartsList));
 
-        await fs.promises.writeFile('database/carts.json', JSON.stringify(newCartsList));
-
-        res.status(200).json({newCartsList})
+        res.status(200).json({cart: 'clean'});
         
     } catch (error) {
         console.log(error);
@@ -92,7 +90,6 @@ const addProductToCartById = async(req, res = response) => {
         } else {
             cartToUpdate.products.forEach(product => {
                 if(product.id === newProductId) {
-                    console.log('aca')
                     product.amount += 1
                 };
             });
@@ -110,20 +107,31 @@ const addProductToCartById = async(req, res = response) => {
     };
 };
 
-const deleteProductFromCartById = async(req, res = response) => {
+const removeProductFromCartById = async(req, res = response) => {
     const cartId = req.params.id;
     const productId = req.params.id_prod;
+    const productAmount = req.body.prodAmount;
 
     try {
+        console.log(productAmount)
         const content = await fs.promises.readFile('database/carts.json');
         const cartsList = JSON.parse(content);
 
         const cartToUpdate = cartsList.find(cart => cart.id === cartId);
-        cartToUpdate.products = cartToUpdate.products.filter(product => product.id !== productId);
 
+        if(productAmount > 1) {
+            cartToUpdate.products.forEach(product => {
+                if(product.id === productId) {
+                    product.amount -= 1;
+                };
+            });
+        } else {
+            cartToUpdate.products = cartToUpdate.products.filter(product => product.id !== productId);
+        };
+        
         await fs.promises.writeFile('database/carts.json', JSON.stringify(cartsList));
 
-        res.status(200).json({cartUpdated: cartToUpdate});
+        res.status(200).json({cart: cartToUpdate.products});
 
     } catch (error) {
         console.log(error);
@@ -138,5 +146,5 @@ module.exports = {
     deleteCartById,
     getCartProductsById,
     addProductToCartById,
-    deleteProductFromCartById
+    removeProductFromCartById,
 };

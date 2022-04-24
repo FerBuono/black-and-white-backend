@@ -1,17 +1,18 @@
 const { Router } = require('express');
 const { getAll, getById, addProduct, updateById, deleteById } = require('../controllers/products');
+const isAdmin = require('../middlewares/admin-validator');
 
 
 const router = Router();
 
 router.get('/', getAll);
 
-router.get('/:id', getById);
+router.get('/:id', isAdmin, getById);
 
-router.post('/', addProduct);
+router.post('/', isAdmin, addProduct);
 
-router.put('/:id', updateById);
+router.put('/:id', isAdmin, updateById);
 
-router.delete('/:id', deleteById);
+router.delete('/:id', isAdmin, deleteById);
 
 module.exports = router;
