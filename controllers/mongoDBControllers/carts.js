@@ -1,25 +1,17 @@
-const fs = require('fs');
 const { response } = require('express');
-const { v4: uuidv4 } = require('uuid'); 
 
+const Cart = require('../../database/mongoDB/models/Cart');
+const Product = require('../../database/mongoDB/models/Product');
 
 const newCart = async(req, res = response) => {
     try {
-        const content = await fs.promises.readFile('database/carts.json');
-        const cartsList = JSON.parse(content);
-        
-        let id = uuidv4();
         let timestamp = Date.now();
         
-        cartsList.push({
-            id,
-            timestamp,
-            products: []
-        });
+        const cart = new Cart({timestamp, products: []});
 
-        await fs.promises.writeFile('database/carts.json', JSON.stringify(cartsList));
+        await cart.save();
 
-        res.status(201).json({newCartId: id});
+        res.status(201).json({cart});
 
     } catch (error) {
         console.log(error);
@@ -33,13 +25,15 @@ const deleteCartById = async(req, res = response) => {
     const cartId = req.params.id;
 
     try {
-        const content = await fs.promises.readFile('database/carts.json');
-        const cartsList = JSON.parse(content);
+        const cartById = await Cart.findById(cartId);
 
-        const cartToClear = cartsList.find(cart => cart.id === cartId);
-        cartToClear.products = [];
+        if(!cartById) {
+            return res.status(404).json({
+                msg: 'Cart no existe por ese id'
+            });
+        };
 
-        await fs.promises.writeFile('database/carts.json', JSON.stringify(cartsList));
+        await Cart.findByIdAndDelete(cartById);
 
         res.status(200).json({cart: 'clean'});
         
@@ -55,12 +49,15 @@ const getCartProductsById = async(req, res = response) => {
     const cartId = req.params.id;
 
     try {
-        const content = await fs.promises.readFile('database/carts.json');
-        const cartsList = JSON.parse(content);
+        const cart = await Cart.findById(cartId);
 
-        const cartToShow = cartsList.find(cart => cart.id === cartId);
+        if(!cart) {
+            return res.status(404).json({
+                msg: 'Cart no existe por ese id'
+            });
+        };
 
-        res.status(200).json({products: cartToShow.cart}) ;
+        res.status(200).json({products: cart.cart}) ;
 
     } catch (error) {
         console.log(error);
@@ -75,15 +72,17 @@ const addProductToCartById = async(req, res = response) => {
     const newProductId = req.body.id;
 
     try {
-        const cartContent = await fs.promises.readFile('database/carts.json');
-        const cartsList = JSON.parse(cartContent);
-        const productsContent = await fs.promises.readFile('database/products.json');
-        const productsList = JSON.parse(productsContent);
-        
-        const productToAdd = productsList.find(product => product.id === newProductId);
+        const productToAdd = await Product.findById(newProductId);
+
+        if(!productToAdd) {
+            return res.status(404).json({
+                msg: 'Producto no existe por ese id'
+            });
+        };
+
         productToAdd.amount = 1;
         
-        const cartToUpdate = cartsList.find(cart => cart.id === cartId);
+        const cartToUpdate = await Cart.findById(cartId);
 
         if(cartToUpdate.products.find(product => product.id === newProductId) === undefined) {
             cartToUpdate.products.push(productToAdd);
@@ -95,9 +94,9 @@ const addProductToCartById = async(req, res = response) => {
             });
         };
 
-        await fs.promises.writeFile('database/carts.json', JSON.stringify(cartsList));
+        const updatedCart = await Cart.findByIdAndUpdate(cartId, cartToUpdate, {new: true});
 
-        res.status(200).json({cart: cartToUpdate.products});
+        res.status(200).json({updatedCart});
 
     } catch (error) {
         console.log(error);
@@ -113,11 +112,13 @@ const removeProductFromCartById = async(req, res = response) => {
     const productAmount = req.body.prodAmount;
 
     try {
-        console.log(productAmount)
-        const content = await fs.promises.readFile('database/carts.json');
-        const cartsList = JSON.parse(content);
+        const cartToUpdate = await Cart.findById(cartId);
 
-        const cartToUpdate = cartsList.find(cart => cart.id === cartId);
+        if(!cartToUpdate) {
+            return res.status(404).json({
+                msg: 'Cart no existe por ese id'
+            });
+        };
 
         if(productAmount > 1) {
             cartToUpdate.products.forEach(product => {
@@ -128,10 +129,10 @@ const removeProductFromCartById = async(req, res = response) => {
         } else {
             cartToUpdate.products = cartToUpdate.products.filter(product => product.id !== productId);
         };
-        
-        await fs.promises.writeFile('database/carts.json', JSON.stringify(cartsList));
 
-        res.status(200).json({cart: cartToUpdate.products});
+        const cartUpdated = await Cart.findByIdAndUpdate(cartId, cartToUpdate, {new: true});
+        
+        res.status(200).json({cartUpdated});
 
     } catch (error) {
         console.log(error);
